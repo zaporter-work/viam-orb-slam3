@@ -43,7 +43,7 @@ import (
 	"go.viam.com/utils/protoutils"
 	"golang.org/x/exp/slices"
 
-	"github.com/viamrobotics/viam-orb-slam3/internal/grpchelper"
+	"github.com/viamrobotics/viam-orb-slam3/grpchelper"
 )
 
 var (
