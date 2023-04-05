@@ -9,7 +9,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -82,7 +81,6 @@ func init() {
 	registry.RegisterService(slam.Subtype, Model, registry.Service{
 		Constructor: func(ctx context.Context, deps registry.Dependencies, config config.Service, logger golog.Logger) (interface{}, error) {
 			fmt.Printf("Constructor callback called")
-			debug.PrintStack()
 			return New(
 				ctx,
 				deps,
@@ -99,7 +97,6 @@ func init() {
 		Model,
 		func(attributes config.AttributeMap) (interface{}, error) {
 			fmt.Printf("RegisterServiceAttributeMapConverter callback called")
-			debug.PrintStack()
 			var attrCfg slamConfig.AttrConfig
 			return config.TransformAttributeMapToStruct(&attrCfg, attributes)
 		},
@@ -298,7 +295,6 @@ func New(
 ) (slam.Service, error) {
 	ctx, span := trace.StartSpan(ctx, "viamorbslam3::New")
 	logger.Warn("New called")
-	debug.PrintStack()
 	defer span.End()
 
 	svcConfig, ok := config.ConvertedAttributes.(*slamConfig.AttrConfig)
@@ -404,7 +400,6 @@ func New(
 // Close closes out of all slam-related processes.
 func (orbSvc *orbslamService) Close() error {
 	orbSvc.logger.Warn("Close called")
-	debug.PrintStack()
 	defer func() {
 		if orbSvc.clientAlgoClose != nil {
 			goutils.UncheckedErrorFunc(orbSvc.clientAlgoClose)
@@ -437,6 +432,7 @@ func (orbSvc *orbslamService) StartDataProcess(
 	cams []camera.Camera,
 	c chan int,
 ) {
+	orbSvc.logger.Warnf("StartDataProcess called %#v\n", cancelCtx)
 	if !orbSvc.useLiveData {
 		return
 	}
@@ -450,6 +446,7 @@ func (orbSvc *orbslamService) StartDataProcess(
 		return
 	}
 	goutils.PanicCapturingGo(func() {
+		orbSvc.logger.Warnf("orbSvc.dataRateMs %#v\n", orbSvc.dataRateMs)
 		ticker := time.NewTicker(time.Millisecond * time.Duration(orbSvc.dataRateMs))
 		defer ticker.Stop()
 		defer orbSvc.activeBackgroundWorkers.Done()
@@ -466,6 +463,7 @@ func (orbSvc *orbslamService) StartDataProcess(
 			case <-cancelCtx.Done():
 				return
 			case <-ticker.C:
+		    orbSvc.logger.Warnf("StartDataProcess tick")
 				orbSvc.activeBackgroundWorkers.Add(1)
 				if err := cancelCtx.Err(); err != nil {
 					if !errors.Is(err, context.Canceled) {
@@ -518,6 +516,7 @@ func (orbSvc *orbslamService) GetSLAMProcessBufferedLogReader() bufio.Reader {
 // StartSLAMProcess starts up the SLAM library process by calling the executable binary and giving it the necessary arguments.
 func (orbSvc *orbslamService) StartSLAMProcess(ctx context.Context) error {
 	ctx, span := trace.StartSpan(ctx, "viamorbslam3::orbslamService::StartSLAMProcess")
+	orbSvc.logger.Warnf("StartSLAMProcess called %#v\n", ctx)
 	defer span.End()
 
 	processConfig := orbSvc.GetSLAMProcessConfig()
@@ -591,6 +590,7 @@ func (orbSvc *orbslamService) StartSLAMProcess(ctx context.Context) error {
 
 // StopSLAMProcess uses the process manager to stop the created slam process from running.
 func (orbSvc *orbslamService) StopSLAMProcess() error {
+	orbSvc.logger.Warn("StopSLAMProcess called")
 	if err := orbSvc.slamProcess.Stop(); err != nil {
 		return errors.Wrap(err, "problem stopping slam process")
 	}
@@ -604,6 +604,7 @@ func (orbSvc *orbslamService) getAndSaveData(
 	cams []camera.Camera,
 ) ([]string, error) {
 	ctx, span := trace.StartSpan(ctx, "viamorbslam3::orbslamService::getAndSaveDataSparse")
+	orbSvc.logger.Warnf("getAndSaveData called %#v\n", ctx)
 	defer span.End()
 
 	switch orbSvc.subAlgo {
