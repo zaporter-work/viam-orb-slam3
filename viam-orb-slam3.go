@@ -5,9 +5,11 @@ package viamorbslam3
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -79,6 +81,8 @@ func SetDialMaxTimeoutSecForTesting(val int) {
 func init() {
 	registry.RegisterService(slam.Subtype, Model, registry.Service{
 		Constructor: func(ctx context.Context, deps registry.Dependencies, config config.Service, logger golog.Logger) (interface{}, error) {
+			fmt.Printf("Constructor callback called")
+			debug.PrintStack()
 			return New(
 				ctx,
 				deps,
@@ -94,6 +98,8 @@ func init() {
 		slam.Subtype,
 		Model,
 		func(attributes config.AttributeMap) (interface{}, error) {
+			fmt.Printf("RegisterServiceAttributeMapConverter callback called")
+			debug.PrintStack()
 			var attrCfg slamConfig.AttrConfig
 			return config.TransformAttributeMapToStruct(&attrCfg, attributes)
 		},
@@ -282,7 +288,8 @@ func (orbSvc *orbslamService) GetInternalState(ctx context.Context, name string)
 }
 
 // New returns a new slam service for the given robot.
-func New(ctx context.Context,
+func New(
+	ctx context.Context,
 	deps registry.Dependencies,
 	config config.Service,
 	logger golog.Logger,
@@ -290,6 +297,8 @@ func New(ctx context.Context,
 	executableName string,
 ) (slam.Service, error) {
 	ctx, span := trace.StartSpan(ctx, "viamorbslam3::New")
+	logger.Warn("New called")
+	debug.PrintStack()
 	defer span.End()
 
 	svcConfig, ok := config.ConvertedAttributes.(*slamConfig.AttrConfig)
@@ -394,6 +403,8 @@ func New(ctx context.Context,
 
 // Close closes out of all slam-related processes.
 func (orbSvc *orbslamService) Close() error {
+	orbSvc.logger.Warn("Close called")
+	debug.PrintStack()
 	defer func() {
 		if orbSvc.clientAlgoClose != nil {
 			goutils.UncheckedErrorFunc(orbSvc.clientAlgoClose)
