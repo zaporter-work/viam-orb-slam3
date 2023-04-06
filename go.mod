@@ -11,7 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rhysd/actionlint v1.6.23
 	go.opencensus.io v0.24.0
-	go.viam.com/api v0.1.101
+	go.viam.com/api v0.1.106
 	go.viam.com/rdk v0.2.34-0.20230405143058-cf0786e95519
 	go.viam.com/slam v0.1.33
 	go.viam.com/test v1.1.1-0.20220913152726-5da9916c08a2
@@ -313,4 +313,5 @@ require (
 	mvdan.cc/unparam v0.0.0-20221223090309-7455f1af531d // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
-replace go.viam.com/rdk  v0.2.34-0.20230405143058-cf0786e95519 => ./rdk
+
+replace go.viam.com/rdk v0.2.34-0.20230405143058-cf0786e95519 => ./rdk
